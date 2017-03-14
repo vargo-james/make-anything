@@ -3,6 +3,7 @@ Yet Another ultimate/canonical/one size fits all Makefile for Any small to
 medium C++/C/Assembly project.
 
 INTRODUCTION / WHY I POSTED YET ANOTHER MAKEFILE ON THE INTERNET
+
 This makefile is versatile and extremely easy to use. Also, it has features I 
 have not seen on other makefiles floating around the internet, notably: It 
 automatically handles mixed language projects; The source file 
@@ -44,7 +45,7 @@ FEATURES
      subdirectory. Your source tree will not be cluttered with object files.
 
   8. SUFFIX SUPPORT: By default this Makefile recognizes the following 
-     suffixes: asm, s, S, c, cpp, C, cc, c++
+     suffixes: s, S, c, cpp, C, cc, c++
      You can add additional suffixes if you need to. Every source file
      must have a suffix that is listed in the Makefile.
 
@@ -114,6 +115,7 @@ For this guide, we define 'project directory' to refer to the directory in
 which the Makefile resides.
 
 SCRIPTS
+
 The GNU make manual recommends against using find and mkdir -p in a makefile.
 Apparently these are not as portable as other shell commands. So if your 
 system does not have the find utility or if your find utility does not 
@@ -140,6 +142,7 @@ default_build
 makefile.
 
 COMPILER VARIABLES
+
 c_compiler, cpp_compiler
   Your compilers. If your project only has C++ files, the value of c_compiler
 is irrelevant. You don't need valid values for variables that will never be
@@ -155,6 +158,7 @@ them on the command line with:
   $ make CFLAGS=-pg CXXFLAGS=-O2
 
 DEBUG vs RELEASE support
+
 assert_header
   This is the name of a file that is created and managed by this makefile.
 Its purpose is to allow automatic support for managing all the NDEBUG guards
@@ -181,6 +185,7 @@ file anywhere you have NDEBUG guards. If you have assertions, then you should
 replace your inclusions of <cassert> or <assert.h> with "project_assert.h".
 
 SOURCE FILES
+
 Typically, all you need to do is set 
 
   source_dirs := src 
@@ -243,11 +248,13 @@ you compile, then you need dir in this list. If you leave this blank, this
 Makefile will automatically add the project directory to it.
 
 SUFFIXES
-  It is unlikely that any of these variables need adjusting, but they are here
-just in case. A File with another suffix or no suffix will not be recognized as
-a source file.
+
+  A File with another suffix or no suffix will not be recognized as
+a source file. If you need to support suffixes that are not listed in the 
+Makefile, you can add them in this section.
 
 LIBRARIES
+
 program_libs
   List any libraries that will need to link here. For example, if you want to
 link GMP (multi-precision arithmetic), add gmp to the list. 
@@ -261,6 +268,7 @@ library, then you need to add its location here. e.g.
   program_libdirs := ~/lib
 
 VERBOSITY
+
   If you always want to see all the shell commands when you run make, then set
 this variable to any non-empty value:
 
