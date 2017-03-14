@@ -1,0 +1,142 @@
+(my $perlpath = <<'/../') =~ s/\s*\z//;
+/usr/bin/perl
+/../
+use strict;
+use vars qw/$statdone/;
+use File::Spec::Functions 'curdir';
+my $startperl = "#! $perlpath -w";
+
+sub maybe_stat ();
+sub fileglob_to_re ($);
+sub breg_to_re ($);
+sub quote ($);
+
+my @roots = ();
+while ($ARGV[0] =~ /^[^-!(]/) {
+    push(@roots, shift);
+}
+@roots = (curdir()) unless @roots;
+for (@roots) { $_ = quote($_) }
+my $roots = join(', ', @roots);
+
+my $stat = 'lstat';
+my $alldone .= "exit;\n";
+my $out = '';
+my $code = '';
+my $declaresubs = "sub wanted;\n";
+my %init = ();
+
+shift;
+shift;
+
+while (@ARGV) {
+    $_ = shift;
+    s/^-// || /^[()!]/ || die "Unrecognized switch: $_\n";
+    if ($_ eq '(') {
+        $out .= "(\n";
+        next;
+    } elsif ($_ eq ')') {
+        $out .= ")";
+    } elsif ($_ eq '!') {
+        $out .= maybe_stat . "!";
+        next;
+    } elsif (/^name$/) {
+        $out .= maybe_stat . '/' . fileglob_to_re(shift) . "/s";
+    } elsif (/^path$/) {
+        $out .= maybe_stat . '$File::Find::name =~ /' . 
+            fileglob_to_re(shift) . "/s";
+    } elsif (/^regex$/) {
+        $out .= maybe_stat . '$File::Find::name =~ /' . breg_to_re(shift) . 
+            "/s";
+    } elsif ($_ eq 'type') {
+        (my $filetest = shift) =~ tr/s/S/;
+        $out .= maybe_stat . "-$filetest _";
+    } elsif ($_ eq 'print') {
+        $out .= 'print("$name\n")';
+    } elsif ($_ eq 'prune') {
+        $out .= '($File::Find::prune = 1)';
+    } else {
+        die "Unrecognized switch: -$_\n";
+    }
+
+    if (@ARGV) {
+        if ($ARGV[0] eq '-o') {
+            { local($statdone) = 1; $out .= "\n" . maybe_stat . "||\n"; }
+            $statdone = 0;
+            shift;
+        } else {
+            $out .= " &&" unless $ARGV[0] eq ')';
+            $out .= "\n";
+            shift if $ARGV[0] eq '-a';
+        }
+    }
+}
+
+$code .= <<"END";
+$startperl
+
+use strict;
+use File::Find ();
+
+use vars qw/*name *prune/;
+*name   = *File::Find::name;
+*prune  = *File::Find::prune;
+$declaresubs
+END
+
+if (exists $init{declarestat}) {
+    $out = <<'END' . $out;
+my ($dev,$ino,$mode,$nlink,$uid,$gid);
+END
+}
+
+$code .= <<"END";
+File::Find::find({wanted => \\&wanted}, $roots);
+$alldone
+sub wanted {
+$out;
+}
+
+END
+
+eval $code;
+
+exit;
+
+############################################################################
+
+sub maybe_stat () {
+    my $makestatcall;
+
+    if (!$statdone) {
+        my $statcall = '(($dev,$ino,$mode,$nlink,$uid,$gid) = '
+                     . $stat . '($_))';
+        $makestatcall .= "$statcall &&\n";
+        $statdone = 1;
+        $init{declarestat} = 1;
+    }
+    $makestatcall;
+}
+
+sub fileglob_to_re ($) {
+    my $x = shift;
+    $x =~ s#([./^\$()+])#\\$1#g;
+    $x =~ s#\*#.*#g;
+    $x =~ s#\?#.#g;
+    "^$x\\z";
+}
+
+sub breg_to_re ($) {
+    my $x = shift;
+    $x =~ s#\\([|()])#$1#g;
+    $x =~ s#\+#\\+#g;
+    "^$x\\z";
+}
+
+sub quote ($) {
+    my $string = shift;
+    $string =~ s/\\/\\\\/g;
+    $string =~ s/'/\\'/g;
+    "'$string'";
+}
+
