@@ -27,8 +27,8 @@
 ###############################################################################
 # PROGRAM NAME
 ###############################################################################
-program_name := cpp-lexer
-debug_program_name := dbg-cpp-lexer
+program_name := hello-world
+debug_program_name := dbg-hello-world
 
 # Binary Directory. This is where you want the executables to land.
 bin_dir := .
@@ -75,13 +75,13 @@ assert_header := project_assert.h
 # whatever source directory that they are located in.
 # Anything listed in loose_sources will be included whether or not it is in the 
 # blacklist.
-source_dirs := src
+source_dirs :=
 loose_sources :=
-excluded_subdirs := src/legacy_test
+excluded_subdirs :=
 blacklist :=
 # Add $(source_dirs) to the list if you put header files in with your source 
 # files.
-includes := include src/test_headers
+includes :=
 
 ###############################################################################
 # SUFFIXES
