@@ -8,14 +8,14 @@ medium C++/C/Assembly project.
 I got tired of the makefiles I was using in the past. They weren't flexible
 enough, and every time I wanted to do something a little different with my 
 project I had to adjust the makefile. So I decided to create one that
-would work for all my basic projects without any more tinkering with code.
+would work for all my basic projects without any more tinkering with build code.
 
 I decided to post it here because it has some nice features that
 I have not seen on other 
 makefiles floating around the internet. Notably, it
 automatically handles mixed language projects. It allows for a simple but 
 flexible source file specification. And It enables very easy 
-management of NDEBUG guards (assert!). It also supports whatever file suffixes
+management of `NDEBUG` guards (assert!). It also supports whatever file suffixes
 you want to use in your project. So if you have a mix of .cpp files and .C 
 files, that is handled automatically. If you want to invent a new suffix for
 your source files you can do that too. 
@@ -49,7 +49,7 @@ very basic distribution tool.
   5. AUTOMATIC SUPPORT FOR RELEASE/DEBUG builds: This file simultaneously
      maintains a debug build and a release build. You can specify whatever
      compilation flags you like for each build. These builds also support
-     easy management of runtime asserts and NDEBUG guards.
+     easy management of runtime asserts and `NDEBUG` guards.
 
   6. QUIET BY DEFAULT: You don't really want to see walls of text flash down
      your screen do you? If you do, then you can. But by default, only simple,
@@ -105,14 +105,15 @@ very basic distribution tool.
 
 ## Quick Start
 
-Download the makefile and optionally the finder script into your project
-directory. Inside the makefile, at the top, there is a PROJECT SPECIFIC 
-VARIABLES section. These are the variables that you can change to configure
-the file for your project. They mostly have reasonable defaults and are fairly 
-self-explanatory. Also, there are comments included that just might answer all 
-your questions without needing to look at the following guide at all. You
-might want to just take a glance at the DEBUG vs RELEASE support section
-below if you use NDEBUG guards or assertions in your code.
+If you know anything about makefiles, it is probably easiest to just download
+this one into your project directory, open it up, and take a look at the 
+PROJECT SPECIFIC VARIABLES section. The comments in the file explain the
+variables there. If you want more details, or you want to know how this makefile
+manages NDEBUG guards, then check out the guide below.
+
+If you don't know anything about makefiles, how did you get here?
+You will probably want to check out the GNU make manual and read the
+introduction there before doing anything.
 
 ## Configuration Guide
 
@@ -121,7 +122,7 @@ explain the user variables that you can set inside the makefile. If you would
 like to know the details of how the makefile works, then please read the GNU
 make manual. It's all in there.
 
-For this guide, we define 'project directory' to refer to the directory in 
+For this guide, we define *project directory* to refer to the directory in 
 which the Makefile resides.
 
 #### Scripts
@@ -137,8 +138,8 @@ I have not yet made a perl script to support systems without mkdir -p.
 
 #### Program Name Variables
 
-*program_name*, *debug_program_name*:
-  These are the names for your executables.
+*release_program_name*, *debug_program_name*:
+  These are the names for your release build and debug build executables.
 
 *bin_dir*:
   The directory where your executables are put. By default this is the 
@@ -171,7 +172,7 @@ them on the command line with:
 
 *assert_header*:
   This is the name of a file that is created and managed by this makefile.
-Its purpose is to allow automatic support for managing all the NDEBUG guards
+Its purpose is to allow automatic support for managing all the `NDEBUG` guards
 in your code. It is a very simple file with at most 2 lines:
 
     #define NDEBUG      // This line is only here in release builds.
@@ -182,17 +183,18 @@ the include path. Suppose you run
 
     $ make debug
 
-Then this file will be overwritten without the NDEBUG defined, and your 
+Then this file will be overwritten without the `NDEBUG` defined, and your 
 compilation will proceed. If you then run
 
     $ make release
 
-the file is overwritten again with the NDEBUG definition. This file is
+the file is overwritten again with the `NDEBUG` definition. This file is
 excluded as a dependency of your source files, so this will not interfere with
-incremental compilation. If you want your NDEBUG guarded code to automatically
+incremental compilation. If you want your `NDEBUG` guarded code to automatically
 be toggled out of existence in your release build, then you must include this
-file anywhere you have NDEBUG guards. If you have assertions, then you should
-replace your inclusions of <cassert> or <assert.h> with "project_assert.h".
+file anywhere you have `NDEBUG` guards. If you have assertions, then you should
+replace your inclusions of `<cassert>` or `<assert.h>` with 
+`"project_assert.h"`.
 
 #### Source Files
 
