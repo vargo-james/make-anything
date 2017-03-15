@@ -62,26 +62,25 @@ cpp_release_flags = -std=c++14 $(release_flags) $(warning_flags)
 ###############################################################################
 # Include this instead of <cassert> or <assert.h> to automatically turn
 # off asserts in your release build. Also include it in any file that uses
-# #NDEBUG guards. This header is automatically created and maintained by this
+# NDEBUG guards. This header is automatically created and maintained by this
 # Makefile. You can change its name here.
 assert_header := project_assert.h
 
 ###############################################################################
 # SOURCE FILES
 ###############################################################################
-# The shell will expand these values. So globs are expanded. If you have 
-# globstar enabled in your shell, then that will be expanded as well. Also 
-# multiple entries separated by spaces are allowed.
-# The exclusion variables match against the path starting with 
-# whatever source directory that they are located in.
-# Anything listed in loose_sources will be included whether or not it is in the 
-# blacklist.
+# The shell will expand these values. So globs are expanded for example. If 
+# you have globstar enabled in your shell, then that will be expanded as well. 
+# Also, multiple entries separated by spaces are allowed.
+# The exclusion variables match against the path starting with whatever source 
+# directory that they are located in. Anything listed in loose_sources will be 
+# included whether or not it is in the blacklist.
 source_dirs :=
 loose_sources :=
 excluded_subdirs :=
 blacklist :=
-# Add $(source_dirs) to the list if you put header files in with your source 
-# files.
+# Add $(source_dirs) to the your list of includes if you put header files in 
+# with your source files.
 includes :=
 
 ###############################################################################
@@ -96,7 +95,8 @@ cpp_suffixes = cpp C cc c++
 ###############################################################################
 # Libraries. Their order here will be preserved for the linker.
 # Do not prefix them with l or -l or -L. Jut put their names. For example, to
-# link 'libm', just add 'm' to program_libs.
+# link 'libm', add 'm' to program_libs and add whatever directory it lives
+# in to program_libdirs.
 program_libs := 
 program_libdirs := 
 
