@@ -27,8 +27,8 @@
 ###############################################################################
 # PROGRAM NAME
 ###############################################################################
-program_name := hello-world
-debug_program_name := dbg-hello-world
+release_program_name := a.out
+debug_program_name := dbg-a.out
 
 # Binary Directory. This is where you want the executables to land.
 bin_dir := .
@@ -46,7 +46,8 @@ release_flags = -O3
 
 # These are the compiler variables that matter. Set them as you like.
 asm_compiler = gcc
-asm_flags =
+asm_debug_flags =
+asm_release_flags =
 
 c_compiler = gcc
 c_debug_flags = $(debug_flags) $(warning_flags)
@@ -113,7 +114,7 @@ v =
 ###############################################################################
 ###############################################################################
 
-# Configuration variables
+# Configuration
 SHELL := /bin/sh
 .SHELLFLAGS := -euc
 .DEFAULT_GOAL := all
@@ -122,14 +123,43 @@ SHELL := /bin/sh
 $(v).SILENT:
 MAKECMDGOALS ?= $(.DEFAULT_GOAL)
 
-DEBUG = .dbg
-.PHONY: all release debug clean assert-file assert-file$(DEBUG)
-.PHONY: asm_sources c_sources cpp_sources sources list
-
+# Constants
+DEBUG := .dbg
+build_dir := build
 empty :=
 space := $(empty) $(empty)
-print_list = printf '%s\n' $(1)
 
+# Printing
+print_list = printf '%s\n' $(1)
+quiet_print = @if [ -z $(v) ]; then printf '%s\n' "$(1)"; fi;
+
+# Assertions
+assert_dir := .assert
+assert_file := $(assert_dir)/$(assert_header)
+assert_file_regexp := $(subst .,\.,$(assert_file))
+filter_assert := sed 's!$(assert_file_regexp)\( *:\)\?!!'
+
+# Default variable values
+ifeq ($(bin_dir),)
+  bin_dir = .
+endif
+ifeq ($(source_dirs),)
+  source_dirs = .
+endif
+ifeq ($(includes),)
+  includes = $(source_dirs) 
+endif
+includes += $(assert_dir)
+ifeq ($(MAKECMDGOALS),all)
+  MAKECMDGOALS := $(default_build)
+endif
+
+.PHONY: all release debug clean 
+.PHONY: assert-header-release assert-header-debug
+.PHONY: build-title-release build-title-debug
+.PHONY: asm_sources c_sources cpp_sources sources list
+
+# Makefile debugging
 THIS_FILE := $(lastword $(MAKEFILE_LIST))
 
 # This will produce a list of all the targets used by this makefile.
@@ -158,18 +188,14 @@ find_matcher = $(find_match0:-path%=-path %)
 is_pruned := $(call find_matcher,$(excluded_subdirs))
 prune_directories :=
 ifneq ($(strip $(is_pruned)),)
-prune_directories := -type d \( $(is_pruned) \) -prune -o
+  prune_directories := -type d \( $(is_pruned) \) -prune -o
 endif
 
 # This matches files that are not excluded.
 exclusions = $(call find_matcher,$(blacklist)) 
 not_blacklisted :=
 ifneq ($(strip $(exclusions)),)
-not_blacklisted := \( \! \( $(exclusions) \) \)
-endif
-
-ifeq ($(source_dirs),)
-  source_dirs = .
+  not_blacklisted := \( \! \( $(exclusions) \) \)
 endif
 
 # This is what gets passed to the system find utility
@@ -182,11 +208,10 @@ find_invocation = $(source_dirs) -regextype posix-basic\
 # We generate the list of sources.
 program_sources :=
 ifneq ($(shell command -v find),)
-program_sources := $(shell find $(find_invocation)) $(loose_sources)
+  program_sources := $(shell find $(find_invocation)) $(loose_sources)
 else ifneq ($(shell command -v perl),)
-program_sources := $(shell perl finder $(find_invocation)) $(loose_sources)
+  program_sources := $(shell perl finder $(find_invocation)) $(loose_sources)
 endif
-
 
 language_filter = $(shell $(print_list) | sed -n '/$(suffix_regex)$$/p')
 
@@ -194,7 +219,7 @@ asm_sources := $(call language_filter,$(program_sources),$(asm_suffixes))
 c_sources := $(call language_filter,$(program_sources),$(c_suffixes))
 cpp_sources := $(call language_filter,$(program_sources),$(cpp_suffixes))
 
-program_sources := $(asm_sources) $(c_sources) $(cpp_sources)
+program_sources = $(asm_sources) $(c_sources) $(cpp_sources)
 
 # To check whether you are getting all your intended sources.
 cpp_sources :
@@ -207,164 +232,173 @@ sources :
 	$(call print_list,$(program_sources))
 
 ###############################################################################
-# PROGRAM OBJECTS
-###############################################################################
-# ENUMERATING program_objects 
-build_dir = build
-# $(1) = source_file, $(2) = {empty}|$(DEBUG)
-src_to_obj = $(build_dir)/$(basename $(1))$(2).o
-ccpp_objects = $(foreach source,$(c_sources) $(cpp_sources),\
-  $(call src_to_obj,$(source),$(2)))
-
-asm_objects = $(foreach source,$(asm_sources),\
-	      $(call src_to_obj,$(source),$(2)))
-
-program_objects = $(asm_objects) $(ccpp_objects)
-
-###############################################################################
-# DEPENDENCY FILES
-###############################################################################
-dependency_dir := $(build_dir)
-# $(1) = source_file, $(2) = {empty}|$(DEBUG)
-temp_dep_file = $(dependency_dir)/$(basename $(1))$(2).Td
-dependency_file = $(dependency_dir)/$(basename $(1))$(2).d
-
-###############################################################################
 # PRIMARY TARGETS
 ###############################################################################
-ifeq ($(bin_dir),)
-bin_dir = .
-endif
 
-all : $(default_build)
+all: $(default_build)
 
-release : $(program_name) | $(bin_dir)
+release: $(release_program_name)
 
-debug : $(debug_program_name) | $(bin_dir)
-
-ifeq ($(MAKECMDGOALS),all)
-MAKECMDGOALS := $(default_build)
-endif
+debug: $(debug_program_name)
 
 ###############################################################################
-# COMPILATION VARIABLES
+# TEMPLATE VARIABLES
 ###############################################################################
-ifeq ($(includes),)
-includes = .
-endif
-CPPFLAGS += $(addprefix $(space)-I,$(includes))
-LDFLAGS += $(addprefix $(space)-L,$(program_libdirs))
-LDFLAGS += $(addprefix $(space)-l,$(program_libs))
-TARGET_ARCH :=
-CXXFLAGS :=
+source_file = $(1)
+build_type = $(2)	# {empty}|$(DEBUG)
+language = $(3)		# asm|c|cpp
 
-# Compilation instructions
+# Files
+object_file = $(build_dir)/$(1)$(2).o
+program_objects = $(foreach source,$(program_sources),\
+		  $(call object_file,$(source),$(2)))
+dependency_file = $(build_dir)/$(1)$(2).d
+temp_dependency_file = $(build_dir)/$(1)$(2).Td
+
+build_mode = $(if $(2),debug,release)
+
+# Standard Variables
 CC := $(c_compiler)
 CXX := $(cpp_compiler)
+CPPFLAGS += $(addprefix $(space)-I,$(includes))
+CXXFLAGS :=
+CCFLAGS :=
+ASFLAGS :=
+TARGET_MACH :=
+TARGET_ARCH :=
+LDFLAGS += $(addprefix $(space)-L,$(program_libdirs))
+LDFLAGS += $(addprefix $(space)-l,$(program_libs))
 
-assert_dir := .assert
-includes += $(assert_dir)
-assert_file := $(assert_dir)/$(assert_header)
-assert_file_regexp := $(subst .,\.,$(assert_file))
-filter_assert := sed 's!$(assert_file_regexp)\( *:\)\?!!'
+###############################################################################
+# LINK RULES TEMPLATE
+###############################################################################
 
-# $(1) = source_file, $(2) = {empty}|$(DEBUG)
-compiler = $(if $(filter %.c,$(1)),CC,CXX)
-passed_flags = $(if $(filter %.c,$(1)),$(CFLAGS),$(CXXFLAGS))
-dep_flags = -MT $(src_to_obj) -MMD -MF $(temp_dep_file)
-rls_flags = $(if $(filter %.c,$(1)),$(c_release_flags),$(cpp_release_flags))
-dbg_flags = $(if $(filter %.c,$(1)),$(c_debug_flags),$(cpp_debug_flags))
-flags = $(if $(2),$(dbg_flags),$(rls_flags))
+define build_mode_template
+$(name) : $(program_objects) | $(bin_dir) build-title-$(build_mode)
+	$(call quiet_print,LINK $(name))
+	$(linker) $(link_time_flags) $$(OUTPUT_OPTION) $(program_objects)
 
-do_compile = $($(compiler)) $(CPPFLAGS) $(dep_flags) \
-	     $(flags) $(passed_flags) $(TARGET_ARCH) -c
+build-title-$(build_mode):
+	printf '%s\n' "$(build_mode) build"
 
-rename_dep = $(filter_assert) $(temp_dep_file) > $(dependency_file)
-
-define build_template =
-$(src_to_obj): $(1) $(dependency_file) \
-  | assert-file$(2) $(dir $(dependency_dir)/$(1)) $(dir $(build_dir)/$(1))
-	@if [ -z $(v) ]; then printf '%s\n' "$(compiler) $(1)"; fi;
-	$(do_compile) $$(OUTPUT_OPTION) $(1)
-	$(rename_dep) 
-	touch $(src_to_obj)
-	$(RM) $(temp_dep_file)
+assert-header-$(build_mode):
+	mkdir -p $(assert_dir)
+	printf '%s\n' $(ndebug) $(std_header) > $(assert_file)
 endef
 
-# Assembly compilation
-define asm_build_template =
-$(src_to_obj): $(1) $(dependency_file) \
-  | assert-file$(2) $(dir $(dependency_dir)/$(1)) $(dir $(build_dir)/$(1))
-	@if [ -z $(v) ]; then printf '%s\n' "$(CC) $(1)"; fi;
-	$(CC) $(dep_flags) $(asm_flags) $(ASFLAGS) $(CPPFLAGS) $(TARGET_MACH) \
-	  -c $$(OUTPUT_OPTION) $(1)
-endef
+$(bin_dir):
+	mkdir -p $@
 
-# Linking rules
+name = $($(build_mode)_program_name)
+
 ifeq ($(cpp_sources),)
-linker = $(CC)
+  linker := $(CC)
 else
-linker = $(CXX)
+  linker := $(CXX)
+endif
+link_time_flags = $(lang_flags) $(CPPFLAGS) $(LDFLAGS) $(link_target)
+
+ifeq ($(c_sources)$(cpp_sources),)
+  link_target := $(TARGET_MACH)
+else
+  link_target := $(TARGET_ARCH)
+endif
+ifneq ($(asm_sources),)
+  lang_flags += $(asm_$(build_mode)_flags) $(ASFLAGS)
+endif
+ifneq ($(c_sources),)
+  lang_flags += $(c_$(build_mode)_flags) $(CFLAGS)
+endif
+ifneq ($(cpp_sources),)
+  lang_flags += $(cpp_$(build_mode)_flags) $(CXXFLAGS)
 endif
 
+ndebug = $(if $(2),,"\#define NDEBUG")
+std_header = "\#include <assert.h>"
 
-linker:
-	@printf '$(linker)\n'
+###############################################################################
+# COMPILATION RULES TEMPLATE
+###############################################################################
 
-# $(2) = {empty}|$(DEBUG)
-prog_name = $(bin_dir)/$(if $(2),$(debug_program_name),$(program_name))
+define compilation_template
+$(object_file): | assert-header-$(build_mode) $(dir $(object_file)) \
+  build-title-$(build_mode)
+$(object_file): $(1) $(dependency_file)
+	$(call quiet_print,$(compiler) $(1))
+	$($(compiler)) $(compile_time_flags) $$(OUTPUT_OPTION) $(1)
+	$(rename_dependency) 
+	touch $(object_file)
+	$(RM) $(temp_dependency_file)
 
-define link_template =
-$(prog_name) : $(program_objects)
-	@if [ -z $(v) ]; then printf '%s\n' "LINK $(prog_name)"; fi;
-	$(linker) $(flags) $(CPPFLAGS) $(LDFLAGS) \
-	  $(TARGET_ARCH) $(ccpp_objects) $$(OUTPUT_OPTION)
+$(dependency_file): ;
+
+$(1): ;
 endef
 
-$(foreach src,$(asm_sources),$(eval $(call asm_build_template,$(src))))
+$(build_dir)/%/:
+	mkdir -p $(dir $@)
+
+compiler = $(if $(filter cpp,$(3)),CXX,CC)
+
+compile_time_flags = $(dependency_flags) $(compilation_flags) \
+		     $(CPPFLAGS) $(compile_target) -c
+
+compile_target = $(if $(filter asm,$(3)),$(TARGET_MACH),$(TARGET_ARCH))
+dependency_flags = -MT $(object_file) -MMD -MF $(temp_dependency_file)
+
+compilation_flags = $(file_flags) $(command_line_flags)
+file_flags = $($(3)_$(build_mode)_flags)
+command_line_flags = $(if $(filter asm,$(3)),$(ASFLAGS),\
+		     $(if $(filter c,$(3)),$(CFLAGS),$(CXXFLAGS)))
+
+# Dependency Management
+rename_dependency = $(filter_assert) $(temp_dependency_file) \
+		    > $(dependency_file)
+
+###############################################################################
+# COMPILATION RULES TEMPLATE
+###############################################################################
 
 # Release builds
 ifneq ($(filter release,$(MAKECMDGOALS)),)
-# Compile
-$(foreach src,$(program_sources),$(eval $(call build_template,$(src),)))
-# Link
-$(eval $(call link_template,,))
-# Assert file
-assert-file:
-	mkdir -p $(assert_dir)
-	printf '%s\n' "#define NDEBUG" "#include <assert.h>" > $(assert_file)
+ $(eval $(call build_mode_template,$(empty),$(empty),$(empty)))
+ifneq ($(asm_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(empty),asm)))
+endif
+ifneq ($(c_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(empty),c)))
+endif
+ifneq ($(cpp_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(empty),cpp)))
+endif
 endif
 
 # Debug builds
 ifneq ($(filter debug,$(MAKECMDGOALS)),)
-# Compile
-$(foreach src,$(program_sources),$(eval $(call build_template,$(src),$(DEBUG))))
-# Link
-$(eval $(call link_template,,$(DEBUG)))
-# Assert file
-assert-file$(DEBUG):
-	mkdir -p $(assert_dir)
-	printf '%s\n' "#include <assert.h>" > $(assert_file)
+ $(eval $(call build_mode_template,$(empty),$(DEBUG),$(empty)))
+ifneq ($(asm_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(DEBUG),asm)))
+endif
+ifneq ($(c_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(DEBUG),c)))
+endif
+ifneq ($(cpp_sources),)
+$(foreach src,$(program_sources),\
+  $(eval $(call compilation_template,$(src),$(DEBUG),cpp)))
+endif
 endif
 
-$(bin_dir):
-	mkdir -p $@
-$(dependency_dir)/%:
-	mkdir -p $(dir $@)
-$(build_dir)/%:
-	mkdir -p $(dir $@)
-
 # Suppress the search for implicit rules.
-%.cpp : ;
-%.c : ;
 %h : ;
 
-# Dependency files need not be present.
-$(dependency_dir)/%.d: ;
-
 clean : 
-	-$(RM) $(call prog_name,)
-	-$(RM) $(call prog_name,$(DEBUG))
+	-$(RM) $(release_program_name)
+	-$(RM) $(debug_program_name)
 	-$(RM) -r $(build_dir)
 	-$(RM) -r $(dependency_dir)
 	-$(RM) -r $(assert_dir)
@@ -372,7 +406,6 @@ clean :
 # These included files establish the dependency of source files on headers.
 # We don't bother to include them when running 'make clean'
 ifneq ($(MAKECMDGOALS),clean)
--include $(patsubst %,$(dependency_dir)/%.d,$(basename $(program_sources)))
--include \
-  $(patsubst %,$(dependency_dir)/%$(DEBUG).d,$(basename $(program_sources)))
+-include $(patsubst %,$(build_dir)/%.d,$(program_sources))
+-include $(patsubst %,$(build_dir)/%$(DEBUG).d,$(program_sources))
 endif
