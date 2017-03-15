@@ -90,12 +90,12 @@ very basic distribution tool.
      If your shell does not support find, but does have perl, then get the 
      finder script and put it in the same directory as this Makefile. This
      Makefile will automatically use it. If you don't know whether your
-     shell supports find, you can find out by typing 'command -v find'. If you
-     it prints '/usr/bin/find' or something like that then you have it. If it
-     gives nothing back, then you don't. Either way, you can get just get the
-     finder script and not worry about it.
+     shell supports find, you can find out by typing `command -v find`. If you
+     it prints `/usr/bin/find` or something like that then you have it. If it
+     gives nothing back, then you don't and you need the finder script. 
+     Either way, you can get just get the finder script and not worry about it.
 
-  4. You need a compiler that supports options -MT -MMD -MF. gcc does this.
+  4. You need a compiler that supports options `-MT -MMD -MF`. gcc does this.
      clang probably does as well. But I have not yet tested clang and their 
      documentation here is lacking.
      
@@ -105,11 +105,12 @@ very basic distribution tool.
 
 ## Quick Start
 
-If you know anything about makefiles, it is probably easiest to just download
-this one into your project directory, open it up, and take a look at the 
-PROJECT SPECIFIC VARIABLES section. The comments in the file explain the
-variables there. If you want more details, or you want to know how this makefile
-manages NDEBUG guards, then check out the guide below.
+If you know anything about makefiles, it is probably easiest to skip the 
+documentation below and just download the makefile into your project directory, 
+open it up, and take a look at the PROJECT SPECIFIC VARIABLES section. 
+The comments in the file explain the variables there. If you want more details, 
+or you want to know how this makefile manages NDEBUG guards, then check out 
+the guide below.
 
 If you don't know anything about makefiles, how did you get here?
 You will probably want to check out the GNU make manual and read the
@@ -234,15 +235,19 @@ For example,
 
     loose_sources := ~/myfile.cpp ../foo.asm ~/other_project/*.c
 
-Files listed here are not excluded by the blacklist.
+Files listed here cannot be excluded by the blacklist.
 
 *excluded_subdirs*:
 These are subdirectories of directories listed in source_dirs. They must
 be specified by a path relative to one of the included source directories.
+For example, if you have `source_dirs := src` and you want to exclude the 
+directory `src/this/subdirectory`, then set
+
+    excluded_subdirs := src/this/subdirectory
 
 *blacklist*:
   Any file listed here will not be used. So if you no longer want to compile
-legacy_code.cpp, but you want to keep it around because it has useful code
+`legacy_code.cpp`, but you want to keep it around because it has useful code
 snippets, then add it to the blacklist. The blacklist does not exclude files
 added in through the loose_sources variable.
 
@@ -255,21 +260,21 @@ includes:
   This tells the compiler where to look for headers. Paths relative to the 
 project directory and absolute paths are accepted. These will be expanded
 by the shell. If you tend to put headers in the same folders with your 
-source files, then add $(source_dirs). If you would need to put -Idir when
+source files, then add `$(source_dirs)`. If you would need to put -Idir when
 you compile, then you need dir in this list. If you leave this blank, 
-then it will automatically be converted to $(source_dirs).
+then it will automatically be converted to `$(source_dirs)`.
 
 #### Suffixes
 
-  A File with another suffix or no suffix will not be recognized as
-a source file. If you need to support suffixes that are not listed in the 
-Makefile, you can add them in this section.
+  A file with an unlisted suffix or no suffix will not be recognized as
+a source file. If you need to support suffixes that is not listed by default, 
+you can add them in this section.
 
 #### Libraries
 
 program_libs:
   List any libraries that will need to link here. For example, if you want to
-link GMP (multi-precision arithmetic), add gmp to the list. 
+link GMP (multi-precision arithmetic), add `gmp` to the list. 
 
     program_libs := gmp
 
