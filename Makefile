@@ -131,7 +131,7 @@ space := $(empty) $(empty)
 
 # Printing
 print_list = printf '%s\n' $(1)
-quiet_print = @if [ -z $(v) ]; then printf '%s\n' "$(1)"; fi;
+quiet_print = if [ -z $(v) ]; then printf '%s\n' "$(1)"; fi;
 
 # Assertions
 assert_dir := .assert
@@ -275,7 +275,7 @@ LDFLAGS += $(addprefix $(space)-l,$(program_libs))
 
 define build_mode_template
 $(name) : $(program_objects) | $(bin_dir) build-title-$(build_mode)
-	$(call quiet_print,LINK $(name))
+	@$(call quiet_print,LINK $(name))
 	$(linker) $(link_time_flags) $$(OUTPUT_OPTION) $(program_objects)
 
 build-title-$(build_mode):
@@ -324,7 +324,7 @@ define compilation_template
 $(object_file): | assert-header-$(build_mode) $(dir $(object_file)) \
   build-title-$(build_mode)
 $(object_file): $(1) $(dependency_file)
-	$(call quiet_print,$(compiler) $(1))
+	@$(call quiet_print,$(compiler) $(1))
 	$($(compiler)) $(compile_time_flags) $$(OUTPUT_OPTION) $(1)
 	$(rename_dependency) 
 	touch $(object_file)
