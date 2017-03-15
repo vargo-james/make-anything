@@ -28,7 +28,7 @@
 # PROGRAM NAME
 ###############################################################################
 release_program_name := a.out
-debug_program_name := dbg-a.out
+debug_program_name := dbg.a.out
 
 # Binary Directory. This is where you want the executables to land.
 bin_dir := .
@@ -45,7 +45,7 @@ debug_flags = -g
 release_flags = -O3
 
 # These are the compiler variables that matter. Set them as you like.
-asm_compiler = gcc
+# The asm_compiler is the same as the c_compiler
 asm_debug_flags =
 asm_release_flags =
 

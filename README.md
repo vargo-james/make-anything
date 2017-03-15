@@ -1,24 +1,37 @@
 Yet another ultimate/canonical/one size fits all makefile for any small to 
 medium C++/C/Assembly project.
 
-INTRODUCTION / WHY I POSTED YET ANOTHER MAKEFILE ON THE INTERNET
+## Introduction / Why I Posted Yet Another Makefile on the Internet
 
-This makefile is versatile and extremely easy to use. Also, it has features I 
-have not seen on other makefiles floating around the internet, notably: It 
-automatically handles mixed language projects; The source file 
-specification is simple but very flexible; It enables very easy
-management of NDEBUG guards (assert!). 
+I got tired of the makefiles I was using in the past. They weren't flexible
+enough, and every time I wanted to do something a little different with my 
+project I had to adjust the makefile. So I decided to create one that
+would work for all my basic projects without any more tinkering with code.
 
-NOTE: Assembly is not fully supported yet. Also, I need to do some testing
-on mixed C and C++ files.
+I decided to post it here because it has some nice features that
+I have not seen on other 
+makefiles floating around the internet. Notably, it
+automatically handles mixed language projects. It allows for a simple but 
+flexible source file specification. And It enables very easy 
+management of NDEBUG guards (assert!). It also supports whatever file suffixes
+you want to use in your project. So if you have a mix of .cpp files and .C 
+files, that is handled automatically. If you want to invent a new suffix for
+your source files you can do that too. 
 
-FEATURES
+Please note that this Makefile is not primarily intended for use as a 
+distribution tool. It does not even include typical targets such as 'install'. 
+Its purpose is to enable incremental compilation during development. 
+If your project has few outside dependencies, then maybe this could serve as a 
+very basic distribution tool.
+
+## FEATURES
 
   1. EASE OF USE: You need only set a few simple variables and your project
-     will be ready to build. In some cases, you only need to specify the name 
-     of the executable you want to build. Unless you want your executable to be
-     named dbg-hello-world. If that's what you want, then you don't have to do
-     a damned thing.
+     will be ready to build. Most of the time, you will only need to change
+     the project name and maybe your source directory and includes. You will
+     also need to specify any libraries that you would normally specify
+     to the linker. The default build mode is debug. If you prefer to build
+     release builds by default, then you can change that.
      
   2. AUTOMATIC DEPENDENCY GENERATION: See 1. If it didn't automatically keep
      track of your headers, it wouldn't be that easy to use would it?
@@ -48,28 +61,24 @@ FEATURES
      You can add additional suffixes if you need to. Every source file
      must have a suffix that is listed in the Makefile.
 
-REASONS TO NOT JUST USE A FULL-FEATURED BUILD SYSTEM (with rebuttals)
+## REASONS TO NOT JUST USE A FULL-FEATURED BUILD SYSTEM (with rebuttals)
 
-  - It has to be installed. ('sudo apt-get install cmake' is so hard).
+  - It would have to be installed. ['sudo apt-get install cmake' is so hard.]
 
-  - I don't need a sledgehammer. (Portability and flexibility are worth it.)
+  - You don't need a sledgehammer. [Portability and flexibility are worth it.]
 
-  - I would have to read documention. (... crickets)
+  - You would have to read documention. [... crickets]
 
-  - Lower level tools are more fun to use because you get to write your
-     own code to make them run (Umm... ok. I thought this was just the build
-     system for the actual projects)
+  - Free software is awesome. [CMake is open source.]
 
-  - I like using Free software. (CMake is open source. Autotools are Free.)
-
-  - I already created this makefile. (Come back when you need cross 
-     compilation or any other advanced feature and you have forgotten the 
-     finer points of makefile coding.)
+  - Is anything really as easy as a makefile that just works? [Is it still easy
+    when you are distributing the software and you have switch to something
+    that supports that?]
 
 REQUIREMENTS
 
   1. Your source files must be on your file system and they cannot contain
-     spaces.
+     spaces. Quotation marks would also probably screw something up.
 
   2. You might need GNU make. Or maybe not. It has only been tested on GNU 
      make 4.0. 
@@ -92,7 +101,7 @@ REQUIREMENTS
      on your system. Of course, this only applies to libraries that your 
      compiler/system does not already know about and handle automatically.
 
-QUICK START
+## QUICK START
 
 Download the makefile and optionally the finder script into your project
 directory. Inside the makefile, at the top, there is a PROJECT SPECIFIC 
@@ -103,7 +112,7 @@ your questions without needing to look at the following guide at all. You
 might want to just take a glance at the DEBUG vs RELEASE support section
 below if you use NDEBUG guards or assertions in your code.
 
-CONFIGURATION GUIDE
+## CONFIGURATION GUIDE
 
 This guide will explain the purpose of the bundled scripts and will then
 explain the user variables that you can set inside the makefile. If you would
@@ -113,7 +122,7 @@ make manual. It's all in there.
 For this guide, we define 'project directory' to refer to the directory in 
 which the Makefile resides.
 
-SCRIPTS
+### SCRIPTS
 
 The GNU make manual recommends against using find and mkdir -p in a makefile.
 Apparently these are not as portable as other shell commands. So if your 
@@ -124,25 +133,25 @@ script will be completely ignored on systems with a find utility.
 
 I have not yet made a perl script to support systems without mkdir -p.
 
-PROGRAM NAME VARIABLES
+### PROGRAM NAME VARIABLES
 
-program_name, debug_program_name
+program_name, debug_program_name:
   These are the names for your executables.
 
-bin_dir
+bin_dir:
   The directory where your executables are put. By default this is the 
 project directory. You can specify a directory by an absolute path or by a 
 relative path from the project directory. A directory by this name will be
 created automatically if it does not already exist. While you are welcome to
 create it yourself, it is not necessary.
 
-default_build
+default_build:
   You can set this to debug or release. Its value is the default target of the
 makefile.
 
-COMPILER VARIABLES
+### COMPILER VARIABLES
 
-c_compiler, cpp_compiler
+c_compiler, cpp_compiler:
   Your compilers. If your project only has C++ files, the value of c_compiler
 is irrelevant. You don't need valid values for variables that will never be
 used. You can override the actual values with the usual command line 
@@ -156,9 +165,9 @@ them on the command line with:
 
   $ make CFLAGS=-pg CXXFLAGS=-O2
 
-DEBUG vs RELEASE support
+### DEBUG vs RELEASE support
 
-assert_header
+assert_header:
   This is the name of a file that is created and managed by this makefile.
 Its purpose is to allow automatic support for managing all the NDEBUG guards
 in your code. It is a very simple file with at most 2 lines:
@@ -183,7 +192,7 @@ be toggled out of existence in your release build, then you must include this
 file anywhere you have NDEBUG guards. If you have assertions, then you should
 replace your inclusions of <cassert> or <assert.h> with "project_assert.h".
 
-SOURCE FILES
+### SOURCE FILES
 
 Typically, all you need to do is set 
 
@@ -205,7 +214,7 @@ you want, you can print a list with
 
   $ make sources
 
-source_dirs
+source_dirs:
   All source files in these directories and all subdirectories will be found.
 You can exclude some of those by using the other variables. If this varialble
 is set to nothing, then the makefile will use the project directory.
@@ -214,7 +223,7 @@ These directories can be specified by absolute paths or paths relative to the
 project directory. Shell file expansions will occur only if your system has the 
 find utility.
 
-loose_sources
+loose_sources:
   You can put a list of source files here. You must either specify absolute 
 paths or relative paths from the project directory. Shell expansions occur. 
 For example,
@@ -223,11 +232,11 @@ For example,
 
 Files listed here are not excluded by the blacklist.
 
-excluded_subdirs
+excluded_subdirs:
   These are subdirectories of directories listed in source_dirs. They must
 be specified by a path relative to one of the included source directories.
 
-blacklist
+blacklist:
   Any file listed here will not be used. So if you no longer want to compile
 legacy_code.cpp, but you want to keep it around because it has useful code
 snippets, then add it to the blacklist. The blacklist does not exclude files
@@ -238,23 +247,23 @@ added in through the loose_sources variable.
 These files must be specified by absolute paths or by paths relative to the 
 source directory in which they live. So for example, if I want to 
 
-includes
+includes:
   This tells the compiler where to look for headers. Paths relative to the 
 project directory and absolute paths are accepted. These will be expanded
 by the shell. If you tend to put headers in the same folders with your 
 source files, then add $(source_dirs). If you would need to put -Idir when
-you compile, then you need dir in this list. If you leave this blank, this
-Makefile will automatically add the project directory to it.
+you compile, then you need dir in this list. If you leave this blank, 
+then it will automatically be converted to $(source_dirs).
 
-SUFFIXES
+### SUFFIXES
 
   A File with another suffix or no suffix will not be recognized as
 a source file. If you need to support suffixes that are not listed in the 
 Makefile, you can add them in this section.
 
-LIBRARIES
+### LIBRARIES
 
-program_libs
+program_libs:
   List any libraries that will need to link here. For example, if you want to
 link GMP (multi-precision arithmetic), add gmp to the list. 
 
@@ -266,7 +275,7 @@ library, then you need to add its location here. e.g.
 
   program_libdirs := ~/lib
 
-VERBOSITY
+### VERBOSITY
 
   If you always want to see all the shell commands when you run make, then set
 this variable to any non-empty value:
