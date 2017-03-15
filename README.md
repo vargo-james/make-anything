@@ -18,7 +18,9 @@ flexible source file specification. And It enables very easy
 management of `NDEBUG` guards (assert!). It also supports whatever file suffixes
 you want to use in your project. So if you have a mix of .cpp files and .C 
 files, that is handled automatically. If you want to invent a new suffix for
-your source files you can do that too. 
+your source files you can do that too. Finally, it does not annoyingly force
+you to maintain a flat source "tree". And, in case you care, it does not 
+employ recursive calls to make.
 
 Please note that this Makefile is not primarily intended for use as a 
 distribution tool. It does not even include typical targets such as 'install'. 
@@ -41,7 +43,9 @@ very basic distribution tool.
   3. FLEXIBLE SOURCE FILE SPECIFICATION: If all your source files are in the
      project directory, make will automatically find them for you. Or, you 
      can selectively grab source files from all over your file system by
-     specifying a few variables.
+     specifying a few variables. Source files in subdirectories are 
+     automatically found.
+     
 
   4. MIXED LANGUAGE SUPPORT: This file works on projects with any combination
      of C, C++, and Assembly source files.
