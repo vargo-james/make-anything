@@ -400,7 +400,6 @@ clean :
 	-$(RM) $(release_program_name)
 	-$(RM) $(debug_program_name)
 	-$(RM) -r $(build_dir)
-	-$(RM) -r $(dependency_dir)
 	-$(RM) -r $(assert_dir)
 
 # These included files establish the dependency of source files on headers.
