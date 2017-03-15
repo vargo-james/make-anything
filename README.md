@@ -1,5 +1,4 @@
-YAMACA
-Yet Another ultimate/canonical/one size fits all Makefile for Any small to 
+Yet another ultimate/canonical/one size fits all makefile for any small to 
 medium C++/C/Assembly project.
 
 INTRODUCTION / WHY I POSTED YET ANOTHER MAKEFILE ON THE INTERNET
