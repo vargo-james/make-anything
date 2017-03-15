@@ -1,3 +1,5 @@
+# Supermake
+
 Yet another ultimate/canonical/one size fits all makefile for any small to 
 medium C++/C/Assembly project.
 
@@ -24,7 +26,7 @@ Its purpose is to enable incremental compilation during development.
 If your project has few outside dependencies, then maybe this could serve as a 
 very basic distribution tool.
 
-## FEATURES
+## Features
 
   1. EASE OF USE: You need only set a few simple variables and your project
      will be ready to build. Most of the time, you will only need to change
@@ -61,7 +63,7 @@ very basic distribution tool.
      You can add additional suffixes if you need to. Every source file
      must have a suffix that is listed in the Makefile.
 
-## REASONS TO NOT JUST USE A FULL-FEATURED BUILD SYSTEM (with rebuttals)
+## Reasons to not just use a full-featured build system (with rebuttals)
 
   - It would have to be installed. ['sudo apt-get install cmake' is so hard.]
 
@@ -75,7 +77,7 @@ very basic distribution tool.
     when you are distributing the software and you have switch to something
     that supports that?]
 
-REQUIREMENTS
+## Requirements
 
   1. Your source files must be on your file system and they cannot contain
      spaces. Quotation marks would also probably screw something up.
@@ -101,7 +103,7 @@ REQUIREMENTS
      on your system. Of course, this only applies to libraries that your 
      compiler/system does not already know about and handle automatically.
 
-## QUICK START
+## Quick Start
 
 Download the makefile and optionally the finder script into your project
 directory. Inside the makefile, at the top, there is a PROJECT SPECIFIC 
@@ -112,7 +114,7 @@ your questions without needing to look at the following guide at all. You
 might want to just take a glance at the DEBUG vs RELEASE support section
 below if you use NDEBUG guards or assertions in your code.
 
-## CONFIGURATION GUIDE
+## Configuration Guide
 
 This guide will explain the purpose of the bundled scripts and will then
 explain the user variables that you can set inside the makefile. If you would
@@ -122,7 +124,7 @@ make manual. It's all in there.
 For this guide, we define 'project directory' to refer to the directory in 
 which the Makefile resides.
 
-### SCRIPTS
+#### Scripts
 
 The GNU make manual recommends against using find and mkdir -p in a makefile.
 Apparently these are not as portable as other shell commands. So if your 
@@ -133,57 +135,57 @@ script will be completely ignored on systems with a find utility.
 
 I have not yet made a perl script to support systems without mkdir -p.
 
-### PROGRAM NAME VARIABLES
+#### Program Name Variables
 
-program_name, debug_program_name:
+*program_name*, *debug_program_name*:
   These are the names for your executables.
 
-bin_dir:
+*bin_dir*:
   The directory where your executables are put. By default this is the 
 project directory. You can specify a directory by an absolute path or by a 
 relative path from the project directory. A directory by this name will be
 created automatically if it does not already exist. While you are welcome to
 create it yourself, it is not necessary.
 
-default_build:
+*default_build*:
   You can set this to debug or release. Its value is the default target of the
 makefile.
 
-### COMPILER VARIABLES
+#### Compiler Variables
 
-c_compiler, cpp_compiler:
+*c_compiler*, *cpp_compiler*:
   Your compilers. If your project only has C++ files, the value of c_compiler
 is irrelevant. You don't need valid values for variables that will never be
 used. You can override the actual values with the usual command line 
 invocations:
 
-  $ make CXX=clang CC=cc
+    $ make CXX=clang CC=cc
 
-c_debug_flags, c_release_flags, cpp_debug_flags, cpp_release_flags
+*debug_flags*, *release_flags*:
   These are the compilation flags used for your builds. You can add flags to 
 them on the command line with:
 
-  $ make CFLAGS=-pg CXXFLAGS=-O2
+    $ make CFLAGS=-pg CXXFLAGS=-O2
 
-### DEBUG vs RELEASE support
+#### Debug vs Release support
 
-assert_header:
+*assert_header*:
   This is the name of a file that is created and managed by this makefile.
 Its purpose is to allow automatic support for managing all the NDEBUG guards
 in your code. It is a very simple file with at most 2 lines:
 
-  #define NDEBUG      // This line is only here in release builds.
-  #include <assert.h>
+    #define NDEBUG      // This line is only here in release builds.
+    #include <assert.h>
 
 It is placed in a subdirectory of the project directory that is then added to
 the include path. Suppose you run
 
-  $ make debug
+    $ make debug
 
 Then this file will be overwritten without the NDEBUG defined, and your 
 compilation will proceed. If you then run
 
-  $ make release
+    $ make release
 
 the file is overwritten again with the NDEBUG definition. This file is
 excluded as a dependency of your source files, so this will not interfere with
@@ -192,16 +194,16 @@ be toggled out of existence in your release build, then you must include this
 file anywhere you have NDEBUG guards. If you have assertions, then you should
 replace your inclusions of <cassert> or <assert.h> with "project_assert.h".
 
-### SOURCE FILES
+#### Source Files
 
 Typically, all you need to do is set 
 
-  source_dirs := src 
+    source_dirs := src 
 
 and you are done here.  If your source files live in the root project 
 directory, then set
 
-  source_dirs := .
+    source_dirs := .
 
 Or just leave it blank and the Makefile will fill in the default '.'.
 
@@ -212,10 +214,10 @@ implementation part of the Makefile.
 If you would like to make sure that the Makefile is finding all the sources
 you want, you can print a list with
 
-  $ make sources
+    $ make sources
 
-source_dirs:
-  All source files in these directories and all subdirectories will be found.
+*source_dirs*:
+All source files in these directories and all subdirectories will be found.
 You can exclude some of those by using the other variables. If this varialble
 is set to nothing, then the makefile will use the project directory.
 
@@ -223,26 +225,26 @@ These directories can be specified by absolute paths or paths relative to the
 project directory. Shell file expansions will occur only if your system has the 
 find utility.
 
-loose_sources:
-  You can put a list of source files here. You must either specify absolute 
+*loose_sources*:
+You can put a list of source files here. You must either specify absolute 
 paths or relative paths from the project directory. Shell expansions occur. 
 For example,
 
-  loose_sources := ~/myfile.cpp ../foo.asm ~/other_project/*.c
+    loose_sources := ~/myfile.cpp ../foo.asm ~/other_project/*.c
 
 Files listed here are not excluded by the blacklist.
 
-excluded_subdirs:
-  These are subdirectories of directories listed in source_dirs. They must
+*excluded_subdirs*:
+These are subdirectories of directories listed in source_dirs. They must
 be specified by a path relative to one of the included source directories.
 
-blacklist:
+*blacklist*:
   Any file listed here will not be used. So if you no longer want to compile
 legacy_code.cpp, but you want to keep it around because it has useful code
 snippets, then add it to the blacklist. The blacklist does not exclude files
 added in through the loose_sources variable.
 
-  blacklist := legacy_code.cpp 
+    blacklist := legacy_code.cpp 
 
 These files must be specified by absolute paths or by paths relative to the 
 source directory in which they live. So for example, if I want to 
@@ -255,36 +257,36 @@ source files, then add $(source_dirs). If you would need to put -Idir when
 you compile, then you need dir in this list. If you leave this blank, 
 then it will automatically be converted to $(source_dirs).
 
-### SUFFIXES
+#### Suffixes
 
   A File with another suffix or no suffix will not be recognized as
 a source file. If you need to support suffixes that are not listed in the 
 Makefile, you can add them in this section.
 
-### LIBRARIES
+#### Libraries
 
 program_libs:
   List any libraries that will need to link here. For example, if you want to
 link GMP (multi-precision arithmetic), add gmp to the list. 
 
-  program_libs := gmp
+    program_libs := gmp
 
 program_libdirs
   If you are linking with a library and your system does not know about that
 library, then you need to add its location here. e.g.
 
-  program_libdirs := ~/lib
+    program_libdirs := ~/lib
 
-### VERBOSITY
+#### Verbosity
 
   If you always want to see all the shell commands when you run make, then set
 this variable to any non-empty value:
 
-  v := 1
+    v := 1
 
 If you prefer to not see the fast scrolling wall of text every time you run
 make, then leave v set to nothing. On the command line, when you want to
 see the shell commands, run
 
-  $ make v=1
+    $ make v=1
 
