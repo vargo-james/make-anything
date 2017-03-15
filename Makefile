@@ -279,7 +279,7 @@ $(name) : $(program_objects) | $(bin_dir) build-title-$(build_mode)
 	$(linker) $(link_time_flags) $$(OUTPUT_OPTION) $(program_objects)
 
 build-title-$(build_mode):
-	printf '%s\n' "$(build_mode) build"
+	@$(call quiet_print,$(build_mode) build)
 
 assert-header-$(build_mode):
 	mkdir -p $(assert_dir)
