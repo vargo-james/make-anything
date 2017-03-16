@@ -130,8 +130,9 @@ empty :=
 space := $(empty) $(empty)
 
 # Printing
+shell_expand = $(shell printf $(1))
 print_list = printf '%s\n' $(1)
-quiet_print = if [ -z $(v) ]; then printf '%s\n' "$(1)"; fi;
+quiet_print = @if [ -z $(v) ]; then printf '%s\n' "$(1)"; fi;
 
 # Assertions
 assert_dir := .assert
@@ -172,16 +173,25 @@ list:
 ###############################################################################
 # PROGRAM SOURCES
 ###############################################################################
+# The quotes will get these properly expanded in the find command.
+excluded_subdirs := $(patsubst %,"%",$(excluded_subdirs))
+blacklist := $(patsubst %,"%",$(blacklist))
+
+# Variables
+# path_patterns = A list of  shell patterns matching a path to a source file 
+# from a source directory.
+path_patterns = $(1)
+suffix_list = $(2)
+
 # Source file regex
-# $(2) = list of suffixes
-suffix_regex = [^[:space:]]*\.\($(subst $(space),\|,$(2))\)
+suffix_regex = [^[:space:]]*\.\($(subst $(space),\|,$(suffix_list))\)
 
 all_suffixes := $(asm_suffixes) $(c_suffixes) $(cpp_suffixes)
 source_regex := $(call suffix_regex,,$(all_suffixes))
 
 # This variable takes a list of path patterns and converts it into a matching
 # expression that the find utility can use.
-find_match0 = $(subst $(space), -o ,$(patsubst %,-path%,$(1)))
+find_match0 = $(subst $(space), -o ,$(patsubst %,-path%,$(path_patterns)))
 find_matcher = $(find_match0:-path%=-path %)
 
 # This matches subdirectories we don't want.
@@ -208,10 +218,11 @@ find_invocation = $(source_dirs) -regextype posix-basic\
 # We generate the list of sources.
 program_sources :=
 ifneq ($(shell command -v find),)
-  program_sources := $(shell find $(find_invocation)) $(loose_sources)
+  program_sources := $(shell find $(find_invocation))
 else ifneq ($(shell command -v perl),)
-  program_sources := $(shell perl finder $(find_invocation)) $(loose_sources)
+  program_sources := $(shell perl finder $(find_invocation))
 endif
+program_sources += $(call shell_expand,"$(loose_sources)")
 
 language_filter = $(shell $(print_list) | sed -n '/$(suffix_regex)$$/p')
 
@@ -245,17 +256,19 @@ debug: $(debug_program_name)
 # TEMPLATE VARIABLES
 ###############################################################################
 source_file = $(1)
-build_type = $(2)	# {empty}|$(DEBUG)
-language = $(3)		# asm|c|cpp
+# build_type = {empty}|$(DEBUG)
+build_type = $(2)
+# language = asm|c|cpp
+language = $(3)
 
 # Files
-object_file = $(build_dir)/$(1)$(2).o
+object_file = $(build_dir)/$(source_file)$(build_type).o
 program_objects = $(foreach source,$(program_sources),\
-		  $(call object_file,$(source),$(2)))
-dependency_file = $(build_dir)/$(1)$(2).d
-temp_dependency_file = $(build_dir)/$(1)$(2).Td
+		  $(call object_file,$(source),$(build_type)))
+dependency_file = $(build_dir)/$(source_file)$(build_type).d
+temp_dependency_file = $(build_dir)/$(source_file)$(build_type).Td
 
-build_mode = $(if $(2),debug,release)
+build_mode = $(if $(build_type),debug,release)
 
 # Standard Variables
 CC := $(c_compiler)
@@ -275,11 +288,11 @@ LDFLAGS += $(addprefix $(space)-l,$(program_libs))
 
 define build_mode_template
 $(name) : $(program_objects) | $(bin_dir) build-title-$(build_mode)
-	@$(call quiet_print,LINK $(name))
+	$(call quiet_print,LINK $(name))
 	$(linker) $(link_time_flags) $$(OUTPUT_OPTION) $(program_objects)
 
 build-title-$(build_mode):
-	@$(call quiet_print,$(build_mode) build)
+	$(call quiet_print,$(build_mode) build)
 
 assert-header-$(build_mode):
 	mkdir -p $(assert_dir)
@@ -313,7 +326,7 @@ ifneq ($(cpp_sources),)
   lang_flags += $(cpp_$(build_mode)_flags) $(CXXFLAGS)
 endif
 
-ndebug = $(if $(2),,"\#define NDEBUG")
+ndebug = $(if $(build_type),,"\#define NDEBUG")
 std_header = "\#include <assert.h>"
 
 ###############################################################################
@@ -323,33 +336,33 @@ std_header = "\#include <assert.h>"
 define compilation_template
 $(object_file): | assert-header-$(build_mode) $(dir $(object_file)) \
   build-title-$(build_mode)
-$(object_file): $(1) $(dependency_file)
-	@$(call quiet_print,$(compiler) $(1))
-	$($(compiler)) $(compile_time_flags) $$(OUTPUT_OPTION) $(1)
+$(object_file): $(source_file) $(dependency_file)
+	$(call quiet_print,$(compiler) $(source_file))
+	$($(compiler)) $(compile_time_flags) $$(OUTPUT_OPTION) $(source_file)
 	$(rename_dependency) 
 	touch $(object_file)
 	$(RM) $(temp_dependency_file)
 
 $(dependency_file): ;
 
-$(1): ;
+$(source_file): ;
 endef
 
 $(build_dir)/%/:
 	mkdir -p $(dir $@)
 
-compiler = $(if $(filter cpp,$(3)),CXX,CC)
+compiler = $(if $(filter cpp,$(language)),CXX,CC)
 
 compile_time_flags = $(dependency_flags) $(compilation_flags) \
 		     $(CPPFLAGS) $(compile_target) -c
 
-compile_target = $(if $(filter asm,$(3)),$(TARGET_MACH),$(TARGET_ARCH))
+compile_target = $(if $(filter asm,$(language)),$(TARGET_MACH),$(TARGET_ARCH))
 dependency_flags = -MT $(object_file) -MMD -MF $(temp_dependency_file)
 
 compilation_flags = $(file_flags) $(command_line_flags)
-file_flags = $($(3)_$(build_mode)_flags)
-command_line_flags = $(if $(filter asm,$(3)),$(ASFLAGS),\
-		     $(if $(filter c,$(3)),$(CFLAGS),$(CXXFLAGS)))
+file_flags = $($(language)_$(build_mode)_flags)
+command_line_flags = $(if $(filter asm,$(language)),$(ASFLAGS),\
+		     $(if $(filter c,$(language)),$(CFLAGS),$(CXXFLAGS)))
 
 # Dependency Management
 rename_dependency = $(filter_assert) $(temp_dependency_file) \
