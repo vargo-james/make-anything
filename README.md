@@ -1,4 +1,4 @@
-# Supermake
+# Make-Anything
 
 Yet another ultimate/canonical/one size fits all makefile for any small to 
 medium C++/C/Assembly project.
@@ -45,7 +45,6 @@ very basic distribution tool.
      can selectively grab source files from all over your file system by
      specifying a few variables. Source files in subdirectories are 
      automatically found.
-     
 
   4. MIXED LANGUAGE SUPPORT: This file works on projects with any combination
      of C, C++, and Assembly source files.
@@ -66,6 +65,9 @@ very basic distribution tool.
      suffixes: s, S, c, cpp, C, cc, c++
      You can add additional suffixes if you need to. Every source file
      must have a suffix that is listed in the Makefile.
+
+  9. PARALLEL EXECUTION: Any makefile should correctly support the -j option,
+     and this one does.
 
 ## Reasons to not just use a full-featured build system (with rebuttals)
 
