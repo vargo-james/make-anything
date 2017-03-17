@@ -215,7 +215,6 @@ directory, then set
     source_dirs := .
 
 Or just leave it blank and the Makefile will fill in the default '.'.
-
 If you want to understand the algorithm by which the source files are
 generated then take a look at the find_invocation variable in the
 implementation part of the Makefile.
@@ -224,6 +223,8 @@ If you would like to make sure that the Makefile is finding all the sources
 you want, you can print a list with
 
     $ make sources
+
+IMPORTANT: directories that end with a trailing slash will not be recognized!
 
 *source_dirs*:
 All source files in these directories and all subdirectories will be found.
@@ -250,6 +251,13 @@ For example, if you have `source_dirs := src` and you want to exclude the
 directory `src/this/subdirectory`, then set
 
     excluded_subdirs := src/this/subdirectory
+
+If all your source files are in the directory src and you want to exclude
+all the source files in any subdirectories of src, you can set
+
+    excluded_subdirs := src/*
+
+The star expands to include all subdirectories of src.
 
 *blacklist*:
   Any file listed here will not be used. So if you no longer want to compile
