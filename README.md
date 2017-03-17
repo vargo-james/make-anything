@@ -96,7 +96,7 @@ very basic distribution tool.
      If your shell does not support find, but does have perl, then get the 
      finder script and put it in the same directory as this Makefile. This
      Makefile will automatically use it. If you don't know whether your
-     shell supports find, you can find out by typing `command -v find`. If you
+     shell supports find, you can find out by typing `command -v find`. If 
      it prints `/usr/bin/find` or something like that then you have it. If it
      gives nothing back, then you don't and you need the finder script. 
      Either way, you can get just get the finder script and not worry about it.
